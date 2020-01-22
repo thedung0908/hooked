@@ -7,26 +7,32 @@ import Movie from './Movie';
 const DEFAULT_API_URL = 'http://www.omdbapi.com/?s=avengers&apikey=82d522d7';
 
 const App = () => {
+  const [loading, setLoading] = useState(true);  
   const [movies, setMovies] = useState([]);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     fetch(DEFAULT_API_URL)
       .then(responseJson => responseJson.json())
         .then(myJson => {
           setMovies(myJson.Search);
+          setLoading(false);
         })
   }, []);
 
   const search = SearchValue => {
-    const searchURL = `http://www.omdbapi.com/?s=${SearchValue}&apikey=82d522d7`;
-    fetch(searchURL)
+    setLoading(true);
+    setErrorMessage(null);
+    fetch(`http://www.omdbapi.com/?s=${SearchValue}&apikey=82d522d7`)
     .then(responseJson => responseJson.json())
       .then(myJson => {
         if (myJson.Response === "True") {
           setMovies(myJson.Search);
+          setLoading(false);
         }
         else {
-          
+          setErrorMessage(myJson.Error);
+          setLoading(false);
         }
       })
   }
@@ -35,11 +41,15 @@ const App = () => {
     <div className = "App">
       <Header text = "HOOKED" />
       <Search search = {search}/>
-      <p> Search Result: </p>
+      <p className = "App-intro"> Search Result: </p>
       <div className = "movies">
-        {movies.map((movie, index) => (
-          <Movie key = {`${index}-${movie.Title}`} movie = {movie} />
-        ))}
+        {(loading && !errorMessage) ? 
+          (<span>loading..</span>) : errorMessage ? 
+            (<div className = "errorMessage">{errorMessage}</div>) : 
+              (movies.map((movie, index) => (
+                <Movie key = {`${index}-${movie.Title}`} movie = {movie} />
+              ))
+        )}
       </div>
     </div>
   );
